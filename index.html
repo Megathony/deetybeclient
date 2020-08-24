@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base de VUEJS en 35 minutes test</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <div class="row">
+                <p class="jumbotron">Login : <input type="text" v-model="user"/> | Vous êtes connecté en tant que {{user}}</p>
+            </div>
+
+            <h1 class="display-4">Paniers</h1>
+            <div v-bind:class="affichage" v-if="commandes.length > 0">
+                <ul>
+                    <li v-for="commande in commandes">{{commande}}</li>
+                </ul>
+                <fiche-produit v-for="commande in commandes" v-bind:nom="commande" role="recap"></fiche-produit>
+            </div>
+            <p>{{prix}}</p>
+            <h1 class="display-4">Produits disponibles</h1>
+            <fiche-produit v-for="produit in produits" v-bind:nom="produit" v-on:commande-passee="commander" role="commande"></fiche-produit>
+            <div class="row">
+                <div class="col-3">
+                    <p class="jumbotron" v-for="produit in produits">
+                        {{ produit }}
+                        <button v-on:click="commander(produit)">Commander !</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        Vue.component('fiche-produit',{
+            template: `
+            <div class="col-3">
+                <p class="jumbotron"> {{nom}}<br>
+                    <button v-on:click="passer_commande(nom)" v-if="role == 'commande'">Commander !</button>
+                </p>
+            </div>
+            `,
+            props: ['nom', 'role'],
+            methodes:{
+                passer_commande: function(produit){
+                    this.$emit('commande-passee', produit)
+                }
+            }
+        })
+
+        var app = new Vue({
+            el: "#app",
+            data: {
+                user: "Bertrand",
+                produits: ["Pizza","Hamburget","Cheeseburger","Tacos"],
+                commandes: [],
+                prix: 0,
+                affichage: "display-7"
+            },
+            methods: {
+                commander: function(produit){
+                    this.commandes.push(produit);
+                    console.log(this.commandes);
+                    this.calculPrix();
+                },
+                calculPrix: function(){
+                    this.prix = 0;
+                    for (let index = 0; index < this.commandes.length; index++) {
+                        if(this.commandes[index] == "Pizza"){
+                            this.prix = this.prix + 12;
+                        };
+                        if(this.commandes[index] == "Hamburget"){
+                            this.prix = this.prix + 5;
+                        };
+                        if(this.commandes[index] == "Cheeseburger"){
+                            this.prix = this.prix + 3;
+                        };
+                        if(this.commandes[index] == "Tacos"){
+                            this.prix = this.prix + 7;
+                        };
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+<section class="player">
+    <div class="playlist">
+      <div  class="video" v-bind:key="video.id" v-for="video in waitingList" :id="video.id" :title="video.snippet.title">
+        <div class="selectVideo">
+          <img :src="video.snippet.thumbnails.default.url" @click="playVideo(video.id)">
+          <div class="text">
+            <p class="title" @click="playVideo(video.id)" >{{video.snippet.title}}</p>
+            <p class="channel">{{video.snippet.channelTitle}}</p>
+          </div>
+        </div>
+        <img class="close" src="./assets/app/del.svg" @click="removeFromPlaylist(video.id)">
+      </div>
+    </div>
+    <div class="button">
+      hello
+    </div>
+  </section>

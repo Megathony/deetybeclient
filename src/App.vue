@@ -1,28 +1,1088 @@
 <template>
-  <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-  </div>
+    <div id="app">
+      <header id="header">
+      <i class="menu" @click="openMenu()">
+        <img src="./assets/header/svg/menu.svg">
+      </i>
+      <div class="icon" href="../" @click="home()">
+        <img src="./assets/header/svg/yt.svg">
+        <h1 class="title"> DeeTube</h1>
+      </div>
+      <form class="searchBar">
+        <input type="text" v-model.lazy="search" v-on:change="searchVideo()" placeholder="Rechercher">
+        <img class="submit" src="./assets/header/svg/search.svg">
+      </form>
+    </header>
+    <section class="menu">
+      <div :class="menu" class="leftBoard">
+        <button @click="playAudio()">
+          <img src="">
+          vos playlists
+        </button>
+      </div>
+    </section>
+    <section class="scroll wrap">
+      <div id="player"></div>
+      <div id="content" :class="hideVideoPlayer">
+        <div class="conteneurVideo" :class="showVideo">
+          <div class="videoPlayer" v-if="videoIsPlaying == true">
+            <img class="closeVideo" src="./assets/app/close.svg" @click="closeVideo()">
+            <div id="ytplayer"></div>
+            <iframe class="YTVideo" :src="videosrc" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <img class="hideVideo" :class="hideVideoPlayer" src="./assets/app/up-chevron.svg" @click="hideVideo()">
+          </div>
+        </div>
+        <div class="home" v-if="content == 'home'">
+          <h1>Les Vidéos populaires du moment</h1>
+          <div class="wait" v-if="mostPop.length < 1">
+            <h2>
+                Recherche en cours...
+            </h2>
+          </div>
+          <div v-else class="allVideos">
+            <div  class="video" v-bind:key="video.id" v-for="video in mostPop" :id="video.id" :title="video.snippet.title">
+              <div class="selectVideo">
+                <img :src="video.snippet.thumbnails.default.url" @click="playVideo(video.id)">
+                <div class="text">
+                  <p class="title" @click="playVideo(video.id)" >{{video.snippet.title}}</p>
+                    <p class="channel" @click="exploreChannel(video.snippet.channelId , video.snippet.channelTitle)">{{video.snippet.channelTitle}}</p>
+                </div>
+              </div>
+              <img class="button" src="./assets/app/addPlaylist.png" @click="addPlaylist(video)">
+            </div>
+          </div>
+        </div>
+        <div class="result" v-if="content == 'result'">
+          <h1>Résultat pour votre recherche de {{search}}</h1>
+          <div class="wait" v-if="resultsVideos.length < 1">
+            <h2>
+                Recherche en cours...
+            </h2>
+          </div>
+          <div v-else>
+            <div class="navButton">
+              <p class="videos" @click="searchVideo()">
+                Vidéos
+              </p>
+              <p class="channels" @click="searchChannel()">
+                Channel
+              </p>
+              <p class="Playlists" @click="searchPlaylist()">
+                Playlists
+              </p>
+            </div>
+            <div v-if="searchNav == 'videos'" class="allVideos">
+              <div  class="video" v-bind:key="video.id.videoId" v-for="video in resultsVideos" :title="video.snippet.title" >
+                  <div class="selectVideo" >
+                    <img :src="video.snippet.thumbnails.default.url" @click="playVideo(video.id.videoId)">
+                    <div class="text">
+                      <p class="title" @click="playVideo(video.id.videoId)">{{video.snippet.title}}</p>
+                    <p class="channel" @click="exploreChannel(video.snippet.channelId , video.snippet.channelTitle)">{{video.snippet.channelTitle}}</p>
+                    </div>
+                  </div>
+                  <img class="button" src="./assets/app/addPlaylist.png" @click="addPlaylist(video)">
+              </div>
+            </div>
+            <div v-if="searchNav == 'channels'" class="allChannels">
+              <div  class="channel" v-bind:key="channel.id.channelId" v-for="channel in resultsChannels" :title="channel.snippet.channelTitle" @click="exploreChannel(channel.snippet.channelId , channel.snippet.channelTitle)">
+                  <div class="selectChannel">
+                    <img :src="channel.snippet.thumbnails.default.url">
+                    <p class="title">{{channel.snippet.channelTitle}}</p>
+                  </div>
+                </div>
+              </div>
+            <div v-if="searchNav == 'playlists'" class="allPlaylists">
+              <div  class="searchPlaylist" v-bind:key="playlist.id.playlistId" v-for="playlist in resultsPlaylists" :title="playlist.snippet.playlistTitle" >
+                  <div class="selectPlaylist" @click="explorePlaylist(playlist.id.playlistId)">
+                    <img :src="playlist.snippet.thumbnails.default.url">
+                    <div class="text">
+                      <p class="title">{{playlist.snippet.title}}</p>
+                      <p class="channel">{{playlist.snippet.channelTitle}}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </div>
+        <div class="channel" v-if="content == 'channel'">
+          <img class="returnButton" @click="returnBackward()" src="./assets/app/returnArrow.png">
+          <div class="wait" v-if="channelsVideos.length < 1">
+            <h2>
+                Chargement
+            </h2>
+          </div>
+          <div v-else class="allChannelContent">
+            <div class="channelInformations">
+              <div class="title">
+                <img :src="channelInformation.snippet.thumbnails.default.url">
+                <h1>{{channelInformation.snippet.title}}</h1>
+              </div>
+              <p>{{channelInformation.snippet.description}}</p>
+              <hr>
+            </div>
+            <div class="channelContent">
+              <div class="ChannelVideos">
+                <h1 class="Categorie">Videos :</h1>
+                <div  class="ChannelVideo" v-bind:key="video.snippet.resourceId.videoId" v-for="video in channelsVideos" :id="video.snippet.resourceId.videoId" :title="video.snippet.title" >
+                  <div class="selectVideo">
+                    <img :src="video.snippet.thumbnails.default.url" @click="playVideo(video.snippet.resourceId.videoId)">
+                      <div class="text">
+                      <p class="title" @click="playVideo(video.snippet.resourceId.videoId)">{{video.snippet.title}}</p>
+                    </div>
+                  </div>
+                  <img class="button" src="./assets/app/addPlaylist.png" @click="addPlaylist(video)">
+                </div>
+              </div>
+              <div class="ChannelPlaylists">
+                <h1 class="Categorie">Playlists :</h1>
+                <div class="ChannelPlaylist" v-bind:key="playlist.id" v-for="playlist in channelsPlaylists" :id="playlist.id" :title="playlist.snippet.title" >
+                  <div class="selectVideo">
+                    <img :src="playlist.snippet.thumbnails.default.url" @click="explorePlaylist(playlist.id)">
+                    <div class="text">
+                      <p class="title" @click="explorePlaylist(playlist.id)">{{playlist.snippet.title}}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="PlaylistContent" v-if="content == 'playlist'">
+          <img class="returnButton" @click="returnBackward()" src="./assets/app/returnArrow.png">
+          <div class="wait" v-if="playlistsVideos.length < 1">
+            <h2>
+                Chargement
+            </h2>
+          </div>
+          <div v-else>
+            <div class="optionPlaylist">
+              <img src="./assets/app/addPlaylist.png">
+              <img src="./assets/app/play-button.svg">
+            </div>
+            <div class="allVideos">
+              <div  class="video" v-bind:key="video.id" v-for="video in playlistsVideos" :id="video.id" :title="video.snippet.title" >
+                <div class="selectVideo">
+                  <img :src="video.snippet.thumbnails.default.url" @click="playVideo(video.snippet.resourceId.videoId)">
+                  <div class="text">
+                    <p class="title" @click="playVideo(video.snippet.resourceId.videoId)">{{video.snippet.title}}</p>
+                    <p class="channel">{{video.snippet.channelTitle}}</p>
+                  </div>
+                </div>
+                <img class="button" src="./assets/app/addPlaylist.png" @click="addPlaylist(video)">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="player">
+      <div class="button">
+        <img class="showPlaylist" :class="menuPlaylist" src="./assets/app/up-chevron.svg" @click="showPlaylist()">
+        faire les boutons pour la musique
+      </div>
+      <div class="playlist" :class="menuPlaylist">
+        <div v-if="waitingList.length >= 1">
+          <div  class="video" v-bind:key="video.id" v-for="video in waitingList" :id="video.id" :title="video.snippet.title">
+            <div class="selectVideo" @click="playAudio(video.id)">
+              <img :src="video.snippet.thumbnails.default.url">
+              <div class="text">
+                <p class="title" >{{video.snippet.title}}</p>
+                <p class="channel">{{video.snippet.channelTitle}}</p>
+              </div>
+            </div>
+            <img class="del" src="./assets/app/del.svg" @click="removeFromPlaylist(video.id)">
+          </div>
+        </div>
+        <div v-else>
+          <p class="emptyPlaylist">¯\_(ツ)_/¯<br>Sorry nothing here</p>
+        </div>
+      </div>
+    </section>
+    <footer>
+    </footer>
+    </div>
 </template>
 
+<script scr="https://www.youtube.com/iframe_api"></script>
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import axios from "axios";
+
+var tag = document.createElement('script');
+
+      tag.src = "https://www.youtube.com/iframe_api";
+      var firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+      // 3. This function creates an <iframe> (and YouTube player)
+      //    after the API code downloads.
+      var player;
+      function onYouTubeIframeAPIReady() {
+        player = new YT.Player('player', {
+          height: '360',
+          width: '640',
+          videoId: 'M7lc1UVf-VE',
+          events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange
+          }
+        });
+      }
+
+      // 4. The API will call this function when the video player is ready.
+      function onPlayerReady(event) {
+        event.target.playVideo();
+      }
+
+      // 5. The API calls this function when the player's state changes.
+      //    The function indicates that when playing a video (state=1),
+      //    the player should play for six seconds and then stop.
+      var done = false;
+      function onPlayerStateChange(event) {
+        if (event.data == YT.PlayerState.PLAYING && !done) {
+          setTimeout(stopVideo, 6000);
+          done = true;
+        }
+      }
+      function stopVideo() {
+        player.stopVideo();
+      }
 
 export default {
-  name: 'App',
-  components: {
-    HelloWorld
+  name: "App",
+  data() {
+    return {
+      mostPop: [],
+      content: "home",
+      search: "",
+      searchNav:"videos",
+      videosrc: "",
+      resultsVideos: [],
+      resultsChannels: [],
+      resultsPlaylists: [],
+      waitingList: [],
+      channelInformation: "",
+      channelsPlaylists: [],
+      channelsVideos: [],
+      playlistsVideos: [],
+      lastAction: [],
+      menuPlaylist: null,
+      showVideo: "",
+      hideVideoPlayer: "",
+      videoIsPlaying: false,
+      menu: null,
+      musicPlayer: false,
+      playlistMenu: false
+    };
+  },
+  mounted() {
+    var self = this;
+    if(self.mostPop.length < 1){
+      axios
+        .get("https://www.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics&chart=mostPopular&maxResults=50&regionCode=FR&videoCategoryId=10&key=AIzaSyC6YKZ7p684K-WnU7iLUgRlro9vtbGD-EY")
+        .then( function(res){
+          console.log('Data : ', res.data.items);
+          self.mostPop = res.data.items;
+        })
+        .catch( function(error){
+          console.log('Error : ', error);
+        })
+    }
+  },
+  methods: {
+    home: function(){
+      this.content = "home";
+    },
+
+    playAudio: function(){
+      console.log("ok");
+        player = new YT.Player('player', {
+          height: '360',
+          width: '640',
+          videoId: 'M7lc1UVf-VE',
+          events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange
+          }
+        });
+
+    },
+
+    hideVideo: function(){
+      if(this.hideVideoPlayer == ""){
+        this.hideVideoPlayer = "active";
+      } else {
+        this.hideVideoPlayer = "";
+      }
+    },
+
+    closeVideo: function(){
+      this.showVideo = "";
+      this.videoIsPlaying = false;
+    },
+
+    openMenu: function(){
+      if(this.menu == null){
+        this.menu = "active";
+      } else {
+        this.menu = null;
+      }
+      console.log(this.menu);
+    },
+
+    say: function(message) {
+      console.log(message);
+    },
+
+    addPlaylist: function(video) {
+      this.waitingList.push(video) ;
+    },
+
+    removeFromPlaylist: function(id) {
+      var tabTemp = [];
+      for(var i = 0; i < this.waitingList.length ; i++){
+        console.log(tabTemp);
+        if(this.waitingList[i].id != id){
+          tabTemp.push(this.waitingList[i]);
+        }
+      }
+      this.waitingList = tabTemp;
+      console.log(this.waitingList);
+    },
+
+    showPlaylist: function(){
+      if(this.menuPlaylist == null){
+        this.menuPlaylist = "show";
+      } else {
+        this.menuPlaylist = null;
+      };
+      console.log("showPlaylist :", this.menuPlaylist);
+    },
+
+    playVideo: function(id){
+      this.videoIsPlaying = false;
+      this.videosrc = "https://www.youtube.com/embed/" + id;
+      this.showVideo = "active";
+      this.hideVideoPlayer = "";
+      this.videoIsPlaying = true;
+      console.log(this.videosrc);
+    },
+    
+    searchVideo: function(nextPage){
+      var self = this;
+      self.searchNav = "videos";
+      if(self.search != ""){
+        var url = "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&type=video&q=" + self.search + "&key=AIzaSyC6YKZ7p684K-WnU7iLUgRlro9vtbGD-EY";
+        axios
+          .get(url) //&pageToken=$page
+          .then( function(res){
+            console.log('Search Video : ', res.data.items);
+            self.resultsVideos = res.data.items;
+          })
+          .catch( function(error){
+            console.log('Error : ', error);
+          })
+        self.content = "result";
+        console.log(self.search);
+        console.log(self.resultsVideos);
+      } else {
+        self.content = "home";
+      }
+    },
+    
+    searchChannel: function(nextPage){
+      var self = this;
+      self.searchNav = "channels";
+      if(self.search != ""){
+        var url = "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&type=channel&q=" + self.search + "&key=AIzaSyC6YKZ7p684K-WnU7iLUgRlro9vtbGD-EY";
+        axios
+          .get(url) //&pageToken=" + nextPage + "
+          .then( function(res){
+            console.log('Search Channel : ', res.data.items);
+            self.resultsChannels = res.data.items;
+          })
+          .catch( function(error){
+            console.log('Error : ', error);
+          })
+        self.content = "result";
+        console.log(self.search);
+        console.log(self.resultsChannels);
+      } else {
+        self.content = "home";
+      }
+    },
+    
+    searchPlaylist: function(nextPage){
+      var self = this;
+      self.searchNav = "playlists";
+      if(self.search != ""){
+        if(self.resultsPlaylists.length <= 1 && nextPage == null){
+          var url = "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&type=playlist&q=" + self.search + "&key=AIzaSyC6YKZ7p684K-WnU7iLUgRlro9vtbGD-EY";
+          axios
+            .get(url)
+            .then( function(res){
+              console.log('Search Playlist : ', res.data.items);
+              self.resultsPlaylists = res.data.items;
+            })
+            .catch( function(error){
+              console.log('Error : ', error);
+            })
+          self.content = "result";
+          console.log(self.search);
+          console.log(self.resultsPlaylists);
+        } else {
+          var searchTemp;
+          var url = "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&pageToken=" + nextPage + "&type=playlist&q=" + self.search + "&key=AIzaSyC6YKZ7p684K-WnU7iLUgRlro9vtbGD-EY";
+          axios
+            .get(url)
+            .then( function(res){
+              console.log('Search Playlist : ', res.data.items);
+              searchTemp = res.data.items;
+            })
+            .catch( function(error){
+              console.log('Error : ', error);
+            })
+          self.content = "result";
+          for(var i = 0; i <= searchTemp.length ; i++){
+            self.resultsPlaylists.push(searchTemp[i]);
+          }
+          console.log(self.search);
+          console.log(self.resultsPlaylists);
+        }
+      } else {
+        self.content = "home";
+      }
+    },
+
+    returnBackward: function(){
+      this.content = this.lastAction[this.lastAction.length - 1];
+      this.lastAction.length = this.lastAction.length - 1;
+      console.log("content :" , this.content);
+      console.log("lastAction :", this.lastAction);
+    },
+
+    exploreChannel: function(channelId , channelTitle){
+      var self = this;
+      self.lastAction.push(this.content);
+      console.log("lastAction :", this.lastAction);
+      console.log(channelId);
+      self.content = "channel";
+      console.log(self.content);
+      var channelVideosId = "";
+      var url = "https://www.googleapis.com/youtube/v3/channels?part=snippet%2CcontentDetails%2Cstatistics&id=" + channelId + "&key=AIzaSyC6YKZ7p684K-WnU7iLUgRlro9vtbGD-EY";
+        axios
+          .get(url) //&pageToken=" + nextPage + "
+          .then( function(res){
+            console.log('Channel Information : ', res.data.items[0]);
+            self.channelInformation = res.data.items[0];
+            channelVideosId = self.channelInformation.contentDetails.relatedPlaylists.uploads;
+            
+          
+            var urlVideo = "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=" + channelVideosId + "&key=AIzaSyC6YKZ7p684K-WnU7iLUgRlro9vtbGD-EY";
+              axios
+                .get(urlVideo) //&pageToken=" + nextPage + "
+                .then( function(res){
+                  console.log('Channel Videos : ', res.data.items);
+                  self.channelsVideos = res.data.items;
+                })
+                .catch( function(error){
+                  console.log('Error : ', error);
+                })
+
+          })
+          .catch( function(error){
+            console.log('Error : ', error);
+          })
+      
+          
+      var url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet%2CcontentDetails&maxResults=50&channelId=" + channelId + "&key=AIzaSyC6YKZ7p684K-WnU7iLUgRlro9vtbGD-EY";
+        axios
+          .get(url) //&pageToken=" + nextPage + "
+          .then( function(res){
+            console.log('Channel Playlists : ', res.data.items);
+            self.channelsPlaylists = res.data.items;
+          })
+          .catch( function(error){
+            console.log('Error : ', error);
+          })
+        console.log(self.channelsVideos);
+        self.channelInformation = channelTitle;
+    },
+
+    explorePlaylist: function(playlistId){
+      console.log(playlistId);
+      var self = this;
+      self.lastAction.push(this.content);
+      console.log("lastAction :", this.lastAction);
+      self.content = "playlist";
+      console.log(self.content);
+      var url = "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=" + playlistId + "&key=AIzaSyC6YKZ7p684K-WnU7iLUgRlro9vtbGD-EY";
+        axios
+          .get(url) //&pageToken=" + nextPage + "
+          .then( function(res){
+            console.log('Playlist Informations : ', res.data.items);
+            self.playlistsVideos = res.data.items;
+          })
+          .catch( function(error){
+            console.log('Error : ', error);
+          })
+        console.log("test",self.playlistsVideos, self.content);
+    }
   }
-}
+};
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+
+.icon{
+  cursor: pointer;
+}
+
+.leftBoard{
+    position: absolute;
+    display: flex;
+    z-index: 3;
+    width: 300px;
+    left: -500px;
+    height: calc(100vh - 140px);
+    overflow-y: scroll;
+    background-color: rgb(35, 38, 40);
+    transition-duration: 0.7s;
+}
+
+.leftBoard button{
+  padding: 20px;
+  font-size:20px;
+  color: white;
+  text-align: left;
+  background:none;
+  border: none;
+  width:100%;
+  height: 60px;
+}
+
+.leftBoard button img{
+  width: 10%;
+  padding-left: 10%;
+  padding-right: 10%;
+}
+
+.leftBoard.active{
+    transition-duration: 0.7s;
+    left: 0px;
+}
+
+#content{
+  transition-duration: 0.7s;
+}
+
+#content.active{
+  margin-top: calc(-100vh + 70px + 120px);
+  transition-duration: 0.7s;
+}
+
+.conteneurVideo{
+  position: relative;
+  height: 0px;
+  transition-duration: 0.7s;
+}
+
+.conteneurVideo.active{
+  height: calc(100vh - 200px);
+  transition-duration: 0.7s;
+  margin-bottom: 50px;
+}
+
+.YTVideo{
+  margin-left:10%;
+  width: 80%;
+  height: 80%;
+}
+
+.closeVideo{
+  transition-duration: 0.7s;
+  position: absolute;
+  right:20px;
+  width: 40px;
+}
+
+.closeVideo:hover{
+  transition-duration: 0.7s;
+  transform: rotate(-180deg);
+}
+
+.hideVideo{
+  position: absolute;
+  bottom: 0;
+  left:0;
+  width: 40px;
+  height:20px;
+  margin-left:50%;
+  transition-duration: 0.5s;
+}
+
+.hideVideo:hover{
+  transition-duration: 1s;
+  transform: rotate(360deg);
+}
+
+.hideVideo.active{
+  transition-duration: 0.5s;
+  transform: rotate(180deg);
+}
+
+.hideVideo.active:hover{
+  transition-duration: 1s;
+  transform: rotate(-180deg);
+}
+
+.videoPlayer{
+  height: calc(100vh - 140px);
+}
+
+.scroll{
+    overflow-y: scroll;
+}
+
+.wrap{
+    height: calc(100vh - 100px - 140px);
+    max-width: 70vw;
+    padding:50px;
+    background-color: rgb(31, 34, 35);
+    margin:auto;
+    box-shadow: 0px 0px 20px 5px rgba(0,0,0,0.75);
+}
+
+.home h1{
+  font-size: 30px;
+}
+
+.wait{
+  text-align:center;
+  height: calc(100vh - 100px - 140px);
+}
+
+.wait h2{
+  position: relative;
+  padding-top: calc(50vh - 240px);
+  font-family: sans-serif;
+  text-transform: uppercase;
+  font-size: 2em;
+  letter-spacing: 4px;
+  overflow: hidden;
+  background: linear-gradient(90deg, #1f2223, #fff, #1f2223);
+  background-repeat: no-repeat;
+  background-size: 80%;
+  animation: animate 3s linear infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0);
+}
+
+@keyframes animate {
+  0% {
+    background-position: -500%;
+  }
+  100% {
+    background-position: 500%;
+  }
+}
+
+.allVideos{
+  margin-top: 50px;
+  margin-bottom: 50px;
+  display: grid;
+  grid-template-columns: repeat(3, 30%);
+  grid-template-rows:  1fr;
+  grid-column-gap: 5%;
+  grid-row-gap: 30px; 
+}
+
+.allVideos .video{
+  cursor: pointer;
+  position: relative;
+  color:white;
+  text-decoration:none;
+  background-color: rgb(40,40,40);
+  padding: 10px;
+  border-radius: 5px;
+  height: 10vh;
+}
+
+.video .selectVideo{
+  display: flex;
+}
+
+.video .selectVideo img{
+  margin-right: 10px;
+  cursor: pointer;
+  height: 10vh;
+}
+
+.video .selectVideo .text{
+  display: block;
+}
+
+.video .selectVideo .text .title{
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: 15px;
+}
+
+.video .selectVideo .text .channel{
+  color:rgb(200,200,200);
+  text-decoration:none;
+  margin-top: 10px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  font-size: 10px;
+}
+
+.video .button{
+  position: absolute;
+  width: 30px;
+  right: 5px;
+  bottom: 10px;
+}
+
+.video .button:hover{
+  width: 35px;
+  right: 2.5px;
+  bottom: 7.5px;
+  transition-duration: 0.5s;
+}
+
+.allChannels{
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+  grid-column-gap: 0px;
+  grid-row-gap: 0px;
+} 
+
+.allChannels .channel{
+  margin:auto;
+  margin-top:50px;
+  padding: 10px;
+  background-color:#282828;
+  border-radius: 5px;
+}
+
+.allChannels .channel img{
+  margin-left:50%;
+  transform: translateX(-50%); 
+}
+
+.allPlaylists{    
+  margin-top: 50px;
+  margin-bottom: 50px;
+  display: grid;
+  grid-template-columns: repeat(3, 30%);
+  grid-template-rows: 1fr;
+  grid-column-gap: 5%;
+  grid-row-gap: 30px;
+}
+
+.allPlaylists .searchPlaylist{    
+  cursor: pointer;
+  position: relative;
+  color: white;
+  text-decoration: none;
+  background-color: rgb(40,40,40);
+  padding: 10px;
+  border-radius: 5px;
+  height: 10vh;
+}
+
+.searchPlaylist .selectPlaylist{
+  display: flex;
+}
+
+.searchPlaylist .selectPlaylist img{
+  margin-right: 10px;
+  cursor: pointer;
+  height: 10vh;
+}
+
+.searchPlaylist .selectPlaylist .text{
+  display: block;
+}
+
+.searchPlaylist .selectPlaylist .text .title{
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: 15px;
+}
+
+.searchPlaylist .selectPlaylist .text .channel{
+  color:rgb(200,200,200);
+  text-decoration:none;
+  margin-top: 10px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  font-size: 10px;
+}
+
+.result .navButton{
+  width: 100%;
+  display:flex;
+}
+
+.result .navButton p{
+  margin: auto;
+  width: 30%;
+  font-size: 20px;
   text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+  margin-top: 20px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  transition-duration: 0.3s;
+  border-color:#293432;
+  border-radius:20px 20px 0px 0px;
+  border-width: 1px;
+  border-style: solid solid none solid;
+}
+
+.result .navButton p:hover{
+  background-color:#293432;
+  transition-duration: 0.3s;
+}
+
+.returnButton {
+  width: 30px;
+}
+
+.allChannelContent{
+  margin-top: 40px;
+}
+
+.allChannelContent .channelInformations p{
+  margin-top:50px;
+  margin-left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  width: 80%;
+}
+
+.allChannelContent .channelInformations hr{
+  margin-top:50px;
+  margin-bottom: 50px;
+}
+
+.allChannelContent .channelInformations .title{
+  display: flex;
+  margin: 20px;
+  height: 100px;
+  width: 100%;
+}
+
+.allChannelContent .channelInformations .title img{
+  width: 100px;
+}
+
+.allChannelContent .channelInformations .title h1{
+  margin-top:30px;
+  margin-left: 20px;
+  font-size: 40px;
+}
+
+.Categorie{
+  margin-left: 10px;
+  font-size: 20px;
+}
+
+.allChannelContent .channelContent{
+  display: flex;
+}
+
+.allChannelContent .channelContent .ChannelVideos{
+  width: 50%;
+}
+
+.allChannelContent .channelContent .ChannelVideos .ChannelVideo{
+  cursor: pointer;
+  position: relative;
+  color:white;
+  text-decoration:none;
+  background-color: rgb(40,40,40);
+  margin: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  height: 10vh;
+}
+
+.allChannelContent .channelContent .ChannelVideos .ChannelVideo .selectVideo{
+  display: flex;
+}
+
+.allChannelContent .channelContent .ChannelVideos .ChannelVideo  .selectVideo img{
+  margin-right: 10px;
+  cursor: pointer;
+  height: 10vh;
+}
+
+.allChannelContent .channelContent .ChannelVideos .ChannelVideo  .selectVideo .text{
+  display: block;
+}
+
+.allChannelContent .channelContent .ChannelVideos .ChannelVideo  .selectVideo .text .title{
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: 15px;
+}
+
+.allChannelContent .channelContent .ChannelVideos .ChannelVideo .button{
+  position: absolute;
+  width: 30px;
+  right: 5px;
+  bottom: 10px;
+}
+
+.allChannelContent .channelContent .ChannelVideos .ChannelVideo .button:hover{
+  width: 35px;
+  right: 2.5px;
+  bottom: 7.5px;
+  transition-duration: 0.5s;
+}
+
+.allChannelContent .channelContent .ChannelPlaylists{
+  width: 50%;
+}
+
+.allChannelContent .channelContent .ChannelPlaylists .ChannelPlaylist{
+  cursor: pointer;
+  position: relative;
+  color:white;
+  text-decoration:none;
+  background-color: rgb(40,40,40);
+  margin: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  height: 10vh;
+}
+
+.allChannelContent .channelContent .ChannelPlaylists .ChannelPlaylist .selectVideo{
+  display: flex;
+}
+
+.allChannelContent .channelContent .ChannelPlaylists .ChannelPlaylist  .selectVideo img{
+  margin-right: 10px;
+  cursor: pointer;
+  height: 10vh;
+}
+
+.allChannelContent .channelContent .ChannelPlaylists .ChannelPlaylist  .selectVideo .text{
+  display: block;
+}
+
+.allChannelContent .channelContent .ChannelPlaylists .ChannelPlaylist  .selectVideo .text .title{
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: 15px;
+}
+
+.allChannelContent .channelContent .ChannelPlaylists .ChannelPlaylist .button{
+  position: absolute;
+  width: 30px;
+  right: 5px;
+  bottom: 10px;
+}
+
+.allChannelContent .channelContent .ChannelPlaylists .ChannelPlaylist .button:hover{
+  width: 35px;
+  right: 2.5px;
+  bottom: 7.5px;
+  transition-duration: 0.5s;
+}
+
+.PlaylistContent .optionPlaylist{
+  display: flex;
+}
+
+.PlaylistContent .optionPlaylist img{
+  width: 40px;
+  height: 40px;
+  margin: 10px;
+}
+
+.player{
+  position: absolute;
+  width: 100%;
+  box-shadow: 0px 0px 20px 5px rgba(0,0,0,0.75);
+}
+
+.player .button{
+  height: 70px;
+  background-color: #780000;
+  position: relative;
+  z-index: 8;
+}
+
+.player .button .showPlaylist{
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  right: 10px;
+  transition-duration: 0.7s;
+}
+
+.player .button .showPlaylist.show{
+  transform:  translateY(-50%) rotate(180deg);
+  transition-duration: 0.7s;
+}
+
+.emptyPlaylist{
+  margin-top: calc(50vh - 140px);
+  transform:  translateY(-50%);
+  opacity: 30%;
+  text-align:center;
+  font-size: 5vh;
+}
+
+.playlist{
+  position: relative;
+  max-width: 70vw;
+  margin: auto;
+  padding: 50px;
+  background-color: rgb(0,0,0);
+  z-index: 5;
+  height: calc(100vh - 70px - 70px - 100px);
+  top: calc(100vh - 70px - 70px);
+  overflow-y:scroll;
+  transition-duration: 0.7s;
+}
+
+.playlist.show{
+  background-color: #670000;
+  top: calc(-100vh + 70px);
+  transition-duration: 0.7s;
+}
+
+.playlist .video{
+  background-color: #870000;
+  position: relative;
+  margin-bottom:10px;
+  padding:5px;
+  border-radius: 5px;
+  box-shadow: 0px 0px 20px 5px rgba(0,0,0,0.10);
+}
+
+.playlist .video .del{
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  right: 50px;
+  width: 20px;
 }
 </style>

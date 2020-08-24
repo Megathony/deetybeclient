@@ -1,0 +1,164 @@
+body{
+    background-color: #181a1b;
+    color: white;
+    font-family: Roboto;
+    overflow: hidden;
+    height: 100vh;
+}
+
+/*----------------------------------------------------------
+
+    Header de la page
+
+----------------------------------------------------------*/
+
+header{
+    position: relative;
+    z-index: 3;
+    display: flex;
+    height: 70px;
+    background-color: #181a1b;
+    box-shadow: 0px 5px 15px 0px rgba(0,0,0,0.75);
+}
+
+header i{
+    cursor: pointer;
+}
+
+header .menu{
+    position: relative;
+    margin: 20px 50px 20px 50px;
+    height: 30px;
+}
+
+header .menu img{
+    height: 30px;
+}
+
+header .waitinglist{
+    position: absolute;
+    right:0;
+    margin: 20px 50px 20px 50px;
+    height: 30px;
+}
+
+header .waitinglist img{
+    height: 30px;
+}
+
+header .icon{
+    position: relative;
+    display: flex;
+    margin-top: 10px;
+    height: 50px;
+    text-decoration: none;
+}
+
+header .icon img{
+    height: 50px;
+}
+
+header .icon .title{
+    text-align: center;
+    margin: 10px;
+    font-size:30px;
+    color:white;
+    font-family: Roboto;
+}
+
+header .searchBar{
+    position: absolute;
+    margin: 10px;
+    margin-left:50%;
+    transform: translateX(-50%);
+    height: 50px;
+    width: 400px;
+    border: 1px solid black;
+    border-radius: 25px;
+    background-color: rgb(31, 34, 35);
+}
+
+header .searchBar input{
+    position: absolute;
+    border: none;
+}
+
+header .searchBar input[type=text]{
+    left: 25px;
+    color: white;
+    font-size: 20px;
+    width: calc(400px - 25px * 2 - 55px);
+    height: 48px;
+    background-color: rgb(31, 34, 35);
+}
+
+header .searchBar img{
+    position: absolute;
+    right: 25px;
+    top: 10px;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    background-image: url();
+    opacity: 0.75;
+    background-size: 30px;
+    background-color: rgba(0,0,0,0);
+}
+
+/*----------------------------------------------------------
+
+    Section bar du menu
+
+----------------------------------------------------------*/
+
+.leftBoard{
+    position: absolute;
+    z-index: 3;
+    width: 500px;
+    left: -500px;
+    min-height: calc(100vh - 100px);
+    overflow-y: scroll;
+    background-color: rgb(35, 38, 40);
+    transition-duration: 0.7s;
+}
+
+.leftBoard.active{
+    transition-duration: 0.7s;
+    left: 0px;
+}
+
+/*----------------------------------------------------------
+
+    Section Application
+
+----------------------------------------------------------*/
+
+.scroll{
+    overflow-y: scroll;
+}
+
+.wrap{
+    position: relative;
+    z-index: 1;
+    padding:50px;
+    background-color: rgb(31, 34, 35);
+    margin:auto;
+    box-shadow: 0px 0px 20px 5px rgba(0,0,0,0.75);
+}
+
+.wrap .noConnection{
+    position: absolute;
+    width: calc(100% - 100px);
+    font-size: 50px;
+    text-align: center;
+    top: 50%;
+    opacity: 0.25;
+    transform: translateY(-50%);
+}
+
+/*----------------------------------------------------------
+
+    Section Acceuil
+
+----------------------------------------------------------*/
+
