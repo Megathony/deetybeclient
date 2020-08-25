@@ -19,6 +19,12 @@
           <img src="">
           vos playlists
         </button>
+
+        <!-- Drogoni begin -->
+        <button id="drogoniButton" @click="drogoniTest()">
+          Start Drogoni's test...
+        </button>
+        <!-- Drogoni end -->
       </div>
     </section>
     <section class="scroll wrap">
@@ -271,7 +277,13 @@ export default {
       videoIsPlaying: false,
       menu: null,
       musicPlayer: false,
-      playlistMenu: false
+      playlistMenu: false,
+
+      // Drogni begin ~
+      drogoniTestPlayer: undefined, // Player used
+      drogoniTestLaunched: false,   // Environment is initialized
+      drogoniTestPaused: false      // Test is paused
+      // ~ Drogoni end
     };
   },
   mounted() {
@@ -526,9 +538,111 @@ export default {
             console.log('Error : ', error);
           })
         console.log("test",self.playlistsVideos, self.content);
+    },
+
+    // Drogoni begin ~
+    /**
+      * Drogoni test function.
+      *
+      * It will control player test environment.
+      * First click : Create environment
+      * Second click: Pause video
+      * Third click: Resume video
+      */
+    drogoniTest: function() {
+      const DROGONI_BUTTON = document.getElementById("drogoniButton");
+
+      // Setup test environment
+      if (!self.drogoniTestLaunched)
+      {
+        alert("Starting Drogoni's test...");
+        console.log("Creating player environment...");
+
+        const body = document.body;
+        var div = document.createElement("div");
+        div.id = "drogoni_player";
+        div.style.display = "none";
+        body.appendChild(div);
+        console.log("Player environment created.");
+
+        // Assume YT API is ready
+        const VIDEO_ID = 'hpjV962DLWs';
+        console.log('Selected video:', VIDEO_ID);
+        self.drogoniTestPlayer = new YT.Player(div.id, {
+          videoId: 'hpjV962DLWs',
+          events: {
+            onReady: onDrogoniReady,
+            onStateChange: onDrogoniChange,
+            onError: onDrogoniError
+          }
+        });
+
+        self.drogoniTestLaunched = true;
+        DROGONI_BUTTON.textContent = "Pause Drogoni's test";
+        return;
+      }
+
+      // Toggle video playing
+      if (!self.drogoniTestPaused)
+      {
+        self.drogoniTestPlayer.pauseVideo();
+        console.log("[Drogoni] Video paused");
+        DROGONI_BUTTON.textContent = "Resume Drogoni's test";
+      }
+      else
+      {
+        self.drogoniTestPlayer.playVideo();
+        console.log("[Drogoni] Video resumed");
+        DROGONI_BUTTON.textContent = "Pause Drogoni's test";
+      }
+      self.drogoniTestPaused = !self.drogoniTestPaused;
     }
   }
+  // ~ Drogoni end
 };
+
+// Drogoni begin ~
+/**
+  * When player is ready, let's start the video.
+  */
+function onDrogoniReady(event)
+{
+  console.log("[Drogoni] Drogoni test player ready, playing video...");
+  event.target.playVideo();
+}
+
+/**
+  * Listen to player's state updates.
+  */
+function onDrogoniChange(event)
+{
+  /*
+  * State ID:
+  *-1 = (Player not loaded)
+  * 0 = YT.PlayerState.ENDED
+  * 1 = YT.PlayerState.PLAYING
+  * 2 = YT.PlayerState.PAUSED
+  * 3 = YT.PlayerState.BUFERRING
+  * 5 = YT.PlayerState.CUES
+  */
+  console.log("[Drogoni] Player state changed to", event.data);
+  if (event.data == YT.PlayerState.ENDED)
+  {
+    alert("Video stopped");
+    self.drogoniTestPaused = true;
+    document.getElementById("drogoniButton").textContent = "Replay video";
+  }
+}
+
+/**
+  * An error has occured ! Print error data to console.
+  */
+function onDrogoniError(event)
+{
+  console.error("[Drogoni] An error occured with player !");
+  console.error(event);
+}
+// ~ Drogoni end
 </script>
 
 <style>
