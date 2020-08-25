@@ -16,8 +16,12 @@
     <section class="menu">
       <div :class="menu" class="leftBoard">
         <button @click="playAudio()">
-          <img src="">
+          <img src="./assets/app/album.svg">
           vos playlists
+        </button>
+        <button @click="playAudio()">
+          <img src="./assets/app/credit.svg">
+          Crédit
         </button>
 
         <!-- Drogoni begin -->
@@ -183,8 +187,36 @@
     </section>
     <section class="player">
       <div class="button">
+        <div class="nowPlaying">
+          <img src="https://i.ytimg.com/vi/YZhve0-Ep2Q/maxresdefault.jpg">
+          <div class="text">
+            <p class="title">Despicable Punk - SiIvaGunner: King for Another Day</p>
+            <p class="channel">SiIvaGunner</p>
+          </div>
+        </div>
+        <div class="buttonCenter">
+          <div class="buttonPlayer">
+            <img src="./assets/app/random.svg">
+            <img src="./assets/app/previous.svg">
+            <img src="./assets/app/audio-play.svg">
+            <img src="./assets/app/next.svg">
+            <img src="./assets/app/repeat.svg">
+          </div>
+          <div class="timer">
+            <p>00:52</p>
+            <div class="avancementBar">
+              <div class="colorBar"></div>
+            </div>
+            <p>01:34</p>
+          </div>
+        </div>
+        <div class="volume">
+          <img src="./assets/app/speaker.svg">
+          <div class="volumeBar">
+            <div class="colorVolumeBar"></div>
+          </div>
+        </div>
         <img class="showPlaylist" :class="menuPlaylist" src="./assets/app/up-chevron.svg" @click="showPlaylist()">
-        faire les boutons pour la musique
       </div>
       <div class="playlist" :class="menuPlaylist">
         <div v-if="waitingList.length >= 1">
@@ -566,10 +598,10 @@ export default {
         console.log("Player environment created.");
 
         // Assume YT API is ready
-        const VIDEO_ID = 'hpjV962DLWs';
+        const VIDEO_ID = '5q4khw71mbY';
         console.log('Selected video:', VIDEO_ID);
         self.drogoniTestPlayer = new YT.Player(div.id, {
-          videoId: 'hpjV962DLWs',
+          videoId: '5q4khw71mbY',
           events: {
             onReady: onDrogoniReady,
             onStateChange: onDrogoniChange,
@@ -653,7 +685,6 @@ function onDrogoniError(event)
 
 .leftBoard{
     position: absolute;
-    display: flex;
     z-index: 3;
     width: 300px;
     left: -500px;
@@ -664,6 +695,7 @@ function onDrogoniError(event)
 }
 
 .leftBoard button{
+  display: flex;
   padding: 20px;
   font-size:20px;
   color: white;
@@ -1136,10 +1168,117 @@ function onDrogoniError(event)
 }
 
 .player .button{
-  height: 70px;
   background-color: #780000;
   position: relative;
+  display: flex;
   z-index: 8;
+  width: 100%;
+  height: 70px;
+}
+
+.player .button .nowPlaying{
+  width:30%;
+  display: flex;
+}
+
+.player .button .nowPlaying img{
+  height: 70px;
+  width:auto;
+}
+
+.player .button .nowPlaying .text .title{
+  color: white;
+  font-size: 15px;    
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.player .button .nowPlaying .text .channel{
+  color: #AAAAAA;
+  font-size: 10px;
+}
+
+.player .button .buttonCenter{
+  width: 40%;
+  display:block;
+}
+
+.player .button .buttonCenter .buttonPlayer{
+  display: flex;
+  justify-content: space-between;
+}
+
+.player .button .buttonCenter .buttonPlayer img{
+  align-items:center;
+  margin: auto;
+  margin-top: 10px;
+  width: 30px;
+  transition-duration: 0.7s;
+}
+
+.player .button .buttonCenter .timer{
+  display: flex;
+  margin-left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  margin-top: 10px;
+}
+
+.player .button .buttonCenter .timer p{
+  transform: translateY(-50%);
+  text-align: center;
+  width: 15%;
+  height: 10px;
+  font-size: 20px;
+}
+
+.player .button .buttonCenter .timer .avancementBar{
+  width: 70%;
+  height: 10px;
+  border-radius: 4px;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #1f2223;
+  box-shadow: 0px 0px 20px 5px rgba(0,0,0,0.30);
+}
+
+.player .button .buttonCenter .timer .avancementBar .colorBar{
+  border-radius: 4px;
+  background-color: #999999;
+  height: 10px;
+  width: 66%;
+}
+
+.player .button .volume{
+  display: flex;
+  width: 30%;
+  height: 70px;
+  padding-left: 50px;
+}
+
+.player .button .volume img{
+  width: 30px;
+  margin-right: 20px;
+}
+
+.player .button .volume .volumeBar{
+  margin-top: 30px;
+  width: 30%;
+  height: 10px;
+  border-radius: 4px;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #1f2223;
+  box-shadow: 0px 0px 20px 5px rgba(0,0,0,0.30);
+}
+
+.player .button .volume .colorVolumeBar{
+  border-radius: 4px;
+  background-color: #999999;
+  height: 10px;
+  width: 66%;
 }
 
 .player .button .showPlaylist{
