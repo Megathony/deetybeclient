@@ -709,10 +709,14 @@ function onDrogoniChange(event)
   if (event.data == YT.PlayerState.ENDED)
   {
     self.musicPlayer = false;
-    console.log(self.musicPlayer);
+    console.log("repeat ? : " ,self.musicPlayerRepeat);
+    if(self.musicPlayerRepeat == true){
+      event.target.playVideo();
+    } else {
     alert("Video stopped");
     self.drogoniTestPaused = true;
     document.getElementById("drogoniButton").textContent = "Replay video";
+    }
   }
 }
 
