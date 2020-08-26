@@ -15,11 +15,11 @@
     </header>
     <section class="menu">
       <div :class="menu" class="leftBoard">
-        <button @click="playAudio()">
+        <button @click="goPlaylist()">
           <img src="./assets/app/album.svg">
           vos playlists
         </button>
-        <button @click="playAudio()">
+        <button @click="goCredit()">
           <img src="./assets/app/credit.svg">
           Crédit
         </button>
@@ -183,31 +183,45 @@
             </div>
           </div>
         </div>
+        <div class="PlaylistContent" v-if="content == 'credit'">
+          <img class="returnButton" @click="returnBackward()" src="./assets/app/returnArrow.png">
+          <h1>Crédits</h1>
+        </div>
       </div>
     </section>
     <section class="player">
       <div class="button">
-        <div class="nowPlaying">
-          <img src="https://i.ytimg.com/vi/YZhve0-Ep2Q/maxresdefault.jpg">
+        <div class="nowPlaying" v-if="infoMusicPlaying != ''">
+          <img :src="infoMusicPlaying.snippet.thumbnails.default.url">
           <div class="text">
-            <p class="title">Despicable Punk - SiIvaGunner: King for Another Day</p>
-            <p class="channel">SiIvaGunner</p>
+            <p class="title">{{infoMusicPlaying.snippet.title}}</p>
+            <p class="channel">{{infoMusicPlaying.snippet.channelTitle}}</p>
+          </div>
+        </div>
+        <div class="nowPlaying" v-else>
+          <img src="./assets/app/default.jpg">
+          <div class="text">
+            <p class="title">sélectionnez une musique à jouer</p>
+            <p class="channel">do it</p>
           </div>
         </div>
         <div class="buttonCenter">
           <div class="buttonPlayer">
-            <img src="./assets/app/random.svg">
+            <img v-if="musicPlayerRandom == true" @click="randomMode()" src="./assets/app/random-activate.svg">
+            <img v-else @click="randomMode()" src="./assets/app/random.svg">
             <img src="./assets/app/previous.svg">
-            <img src="./assets/app/audio-play.svg">
+            <img @click="drogoniTest()" v-if="musicPlayer == true" src="./assets/app/audio-pause.svg">
+            <img @click="drogoniTest()" v-else src="./assets/app/audio-play.svg">
             <img src="./assets/app/next.svg">
-            <img src="./assets/app/repeat.svg">
+            <img v-if="musicPlayerRepeat == true" @click="repeatMode()" src="./assets/app/repeat-activate.svg">
+            <img v-else @click="repeatMode()" src="./assets/app/repeat.svg">
           </div>
           <div class="timer">
-            <p>00:52</p>
+            <p id="currentTime">00:52</p>
             <div class="avancementBar">
               <div class="colorBar"></div>
             </div>
-            <p>01:34</p>
+            <p id="durationTime">01:34</p>
           </div>
         </div>
         <div class="volume">
@@ -221,7 +235,7 @@
       <div class="playlist" :class="menuPlaylist">
         <div v-if="waitingList.length >= 1">
           <div  class="video" v-bind:key="video.id" v-for="video in waitingList" :id="video.id" :title="video.snippet.title">
-            <div class="selectVideo" @click="playAudio(video.id)">
+            <div class="selectVideo" @click="playAudio(video)">
               <img :src="video.snippet.thumbnails.default.url">
               <div class="text">
                 <p class="title" >{{video.snippet.title}}</p>
@@ -309,6 +323,10 @@ export default {
       videoIsPlaying: false,
       menu: null,
       musicPlayer: false,
+      musicPlayerRandom: false,
+      musicPlayerRepeat: false,
+      musicPlaying: "YZhve0-Ep2Q",
+      infoMusicPlaying:"",
       playlistMenu: false,
 
       // Drogni begin ~
@@ -337,18 +355,22 @@ export default {
       this.content = "home";
     },
 
-    playAudio: function(){
-      console.log("ok");
-        player = new YT.Player('player', {
-          height: '360',
-          width: '640',
-          videoId: 'M7lc1UVf-VE',
-          events: {
-            'onReady': onPlayerReady,
-            'onStateChange': onPlayerStateChange
-          }
-        });
+    goPlaylist: function(){
+      this.content = "yourPlaylist";
+    },
 
+    goCredit: function(){
+      this.content = "credit";
+    },
+
+    playAudio: function(info){
+      console.log("info playing now :", info);
+      if(info.snippet.resourceId != undefined){
+        this.musicPlaying = info.snippet.resourceId.videoId;
+      } else {
+        this.musicPlaying = info.id;
+      }
+      this.infoMusicPlaying = info;
     },
 
     hideVideo: function(){
@@ -572,6 +594,29 @@ export default {
         console.log("test",self.playlistsVideos, self.content);
     },
 
+    repeatMode: function(){
+      if(this.musicPlayerRepeat == false){
+        this.musicPlayerRepeat = true;
+      } else {
+        this.musicPlayerRepeat = false;
+      };
+      console.log("Repeat:",this.musicPlayerRepeat);
+    },
+
+    // Function Random ~
+    /**
+      * When user click on random button, random mode is activated but if he was already activated, desactivate it.
+      */
+
+    randomMode: function(){
+      if(this.musicPlayerRandom == false){
+        this.musicPlayerRandom = true;
+      } else {
+        this.musicPlayerRandom = false;
+      };
+      console.log("Random :",this.musicPlayerRandom);
+    },
+
     // Drogoni begin ~
     /**
       * Drogoni test function.
@@ -598,16 +643,17 @@ export default {
         console.log("Player environment created.");
 
         // Assume YT API is ready
-        const VIDEO_ID = '5q4khw71mbY';
+        const VIDEO_ID = this.musicPlaying;
         console.log('Selected video:', VIDEO_ID);
         self.drogoniTestPlayer = new YT.Player(div.id, {
-          videoId: '5q4khw71mbY',
+          videoId: this.musicPlaying,
           events: {
             onReady: onDrogoniReady,
             onStateChange: onDrogoniChange,
             onError: onDrogoniError
           }
         });
+        this.musicPlayer = true;
 
         self.drogoniTestLaunched = true;
         DROGONI_BUTTON.textContent = "Pause Drogoni's test";
@@ -617,12 +663,14 @@ export default {
       // Toggle video playing
       if (!self.drogoniTestPaused)
       {
+        this.musicPlayer = false;
         self.drogoniTestPlayer.pauseVideo();
         console.log("[Drogoni] Video paused");
         DROGONI_BUTTON.textContent = "Resume Drogoni's test";
       }
       else
       {
+        this.musicPlayer = true;
         self.drogoniTestPlayer.playVideo();
         console.log("[Drogoni] Video resumed");
         DROGONI_BUTTON.textContent = "Pause Drogoni's test";
@@ -660,6 +708,8 @@ function onDrogoniChange(event)
   console.log("[Drogoni] Player state changed to", event.data);
   if (event.data == YT.PlayerState.ENDED)
   {
+    self.musicPlayer = false;
+    console.log(self.musicPlayer);
     alert("Video stopped");
     self.drogoniTestPaused = true;
     document.getElementById("drogoniButton").textContent = "Replay video";
