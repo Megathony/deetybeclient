@@ -196,7 +196,23 @@
             <img class="returnButton" src="./assets/app/returnArrow.png">
           </a>
           <h1>Erreur détecté!</h1>
-          <p>{{error}}</p>
+          <div class="error">
+            <div v-if="error == 'Error: Request failed with status code 403'">
+              <h1>403</h1>
+              <img src="https://i.ytimg.com/vi/wHx3Qnextj4/maxresdefault.jpg">
+              <p>J'ai pas l'impression que Google vous aprécie beaucoup :/</p>
+            </div>
+            <div v-if="error == 'Error: Request failed with status code 404'">
+              <h1>404</h1>
+              <img src="https://i.ytimg.com/vi/GGihsStVF60/maxresdefault.jpg">
+              <p>Se que tu cherche n'a aucun sens</p>
+            </div>
+            <div v-else>
+              <h1>{{error}}</h1>
+              <img src="https://i.ytimg.com/vi/FNIeQDP37Nc/maxresdefault.jpg">
+              <p>What the fuck just happend?!</p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -1040,6 +1056,20 @@ function onDrogoniError(event)
   transition-duration: 0.5s;
 }
 
+.selectVideo .playButton{
+  position: absolute;
+  width: 30px;
+  right: 45px;
+  bottom: 10px;
+}
+
+.selectVideo .playButton:hover{
+  width: 35px;
+  right: 42.5px;
+  bottom: 7.5px;
+  transition-duration: 0.5s;
+}
+
 .allChannels{
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -1477,5 +1507,22 @@ function onDrogoniError(event)
   transform: translateY(-50%);
   right: 50px;
   width: 20px;
+}
+
+.error div img{
+  width: 50%;
+  margin-left: 25%;
+}
+
+.error div h1{
+  width: 100%;
+  font-size: 50px;
+  text-align: center;
+}
+
+.error div p{
+  width: 100%;
+  font-size: 30px;
+  text-align: center;
 }
 </style>
