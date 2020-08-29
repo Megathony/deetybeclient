@@ -8,7 +8,7 @@
         <img src="./assets/header/svg/yt.svg">
         <h1 class="title"> DeeTube</h1>
       </div>
-      <form class="searchBar">
+      <form class="searchBar" onsubmit="return false">
         <input type="text" v-model.lazy="search" v-on:change="searchVideo()" placeholder="Rechercher">
         <img class="submit" src="./assets/header/svg/search.svg">
       </form>
