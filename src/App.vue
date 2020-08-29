@@ -314,9 +314,25 @@ export default {
       drogoniTestPaused: false,      // Test is paused
       // ~ Drogoni end
 
+      /**
+       * Background player used to play audio.
+       */
       audioPlayer: undefined,
+      
+      /**
+       * Flag to notify if background player is initialized.
+       * It will not notify if player is ready to play videos.
+       */
       audioPlayerInit: false,
+
+      /**
+       * Flag to notify if background player is ready to play videos.
+       */
       audioPlayerReady: false,
+
+      /**
+       * Flag to notify if a video is currently played.
+       */
       audioPlaying: false
     };
   },
@@ -663,12 +679,27 @@ export default {
     },
     // ~ Drogoni end
 
+    // -------------------------------------------
+    // AUDIO BACKGROUND FUNCTIONS
+    // -------------------------------------------
+    
+    /**
+     * On background player ready.
+     * 
+     * When player is ready, it will begin to play videos and begin a task that will
+     * update video progress information (time elapsed and fill progress bar).
+     * 
+     * Looped task is exectue every 0.5 seconds.
+     * 
+     * @param event - The event
+     */
     onAudioReady: function(event)
     {
       console.log("Audio Player ready");
       this.audioPlayerReady = true;
       this.audioPlayer.playVideo();
 
+      // Looped task 
       var self = this;
       setInterval(function() {
         if (self.audioPlayer.getPlayerState() == YT.PlayerState.PLAYING)
@@ -676,9 +707,11 @@ export default {
           let currentTime = self.audioPlayer.getCurrentTime();
           let durationTime = self.audioPlayer.getDuration();
 
+          // Update progress bar
           let percent = ((currentTime / durationTime) * 100).toFixed(0) + "%";
           document.getElementById("progressBar").style.width = percent;
 
+          // Update time elapsed block
           let min = Math.floor(currentTime / 60);
           let sec = (currentTime % 60).toFixed(0);
           if (min < 10) min = "0" + min;
@@ -688,6 +721,14 @@ export default {
       }, 500);
     },
 
+    /**
+     * On background player state update.
+     * 
+     * Updating `audioPlaying` flag and if new statement is `BUFFERING`, video duration information
+     * will be reflected on user interface.
+     * 
+     * @param event - The event
+     */
     onAudioStateChange: function(event)
     {
       this.audioPlaying = (event.data == YT.PlayerState.PLAYING);
@@ -704,22 +745,40 @@ export default {
       }
     },
 
+    /**
+     * On background player.
+     * 
+     * @param event - The event
+     */
     onAudioError: function(event)
     {
-      // TODO
+      // TODO Complete it.
     },
 
+    /**
+     * Initialize background player.
+     * 
+     * It will create an <div> at the end of <body> and contains the id `audioBackground`.
+     * After be added, the background player is created and loaded on current `musicPlaying`.
+     * 
+     * The player will toggle `onAudioReady`, `onAudioStateChange` and `onAudioError` for player's events.
+     * 
+     * This function can be execute only one time.
+     */
     audioPlayerSetup: function()
     {
       if (this.audioPlayerInit)
         return;
       
       console.log("Setup audio player...");
+      
+      // Create the place of audio player
       var playerFrame = document.createElement("div");
       playerFrame.id = "audioBackground";
       playerFrame.style.display = "none";
       document.body.appendChild(playerFrame);
 
+      // Now setup player
       this.audioPlayer = new YT.Player(playerFrame.id, {
         videoId: this.musicPlaying,
         events: {
@@ -732,6 +791,16 @@ export default {
       this.audioPlayerInit = true;
     },
 
+    /**
+     * Control the background player.
+     * 
+     * It will initialize the player if player isn't initialized and from passed command,
+     * it will play video, pause video, etc..
+     * 
+     * If the audio player isn't ready, nothing will be done.
+     * 
+     * @param command - The command (please see at `PLAYER_COMMAND` constants for available commands)
+     */
     audioPlayerControl: function(command)
     {
       this.audioPlayerSetup();
@@ -748,6 +817,7 @@ export default {
         case PLAYER_COMMAND.PAUSE:
           this.audioPlayer.pauseVideo();
           break;
+        // TODO Add missing commands
         default:
           console.error("Command ID", command, "not implemented");
       }
