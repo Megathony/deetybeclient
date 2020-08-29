@@ -210,8 +210,8 @@
             <img v-if="musicPlayerRandom == true" @click="randomMode()" src="./assets/app/random-activate.svg">
             <img v-else @click="randomMode()" src="./assets/app/random.svg">
             <img src="./assets/app/previous.svg">
-            <img @click="drogoniTest()" v-if="musicPlayer == true" src="./assets/app/audio-pause.svg">
-            <img @click="drogoniTest()" v-else src="./assets/app/audio-play.svg">
+            <img @click="audioPlayerControl(1)" v-if="audioPlaying" src="./assets/app/audio-pause.svg">
+            <img @click="audioPlayerControl(0)" v-else src="./assets/app/audio-play.svg">
             <img src="./assets/app/next.svg">
             <img v-if="musicPlayerRepeat == true" @click="repeatMode()" src="./assets/app/repeat-activate.svg">
             <img v-else @click="repeatMode()" src="./assets/app/repeat.svg">
@@ -219,7 +219,7 @@
           <div class="timer">
             <p id="currentTime">00:52</p>
             <div class="avancementBar">
-              <div class="colorBar"></div>
+              <div id="progressBar" class="colorBar"></div>
             </div>
             <p id="durationTime">01:34</p>
           </div>
@@ -255,49 +255,28 @@
     </div>
 </template>
 
-<script scr="https://www.youtube.com/iframe_api"></script>
+<!-- Compilation fix -->
+<script src="https://www.youtube.com/iframe_api"></script>
 <script>
 import axios from "axios";
 
+// Define constants
+/**
+ * Available player commands
+ */
+const PLAYER_COMMAND = {
+  PLAY: 0,
+  PAUSE: 1,
+  NEXT: 2,
+  PREVIOUS: 3
+}
+
+// Import Youtube IFrame API
 var tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
 
-      tag.src = "https://www.youtube.com/iframe_api";
-      var firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-      // 3. This function creates an <iframe> (and YouTube player)
-      //    after the API code downloads.
-      var player;
-      function onYouTubeIframeAPIReady() {
-        player = new YT.Player('player', {
-          height: '360',
-          width: '640',
-          videoId: 'M7lc1UVf-VE',
-          events: {
-            'onReady': onPlayerReady,
-            'onStateChange': onPlayerStateChange
-          }
-        });
-      }
-
-      // 4. The API will call this function when the video player is ready.
-      function onPlayerReady(event) {
-        event.target.playVideo();
-      }
-
-      // 5. The API calls this function when the player's state changes.
-      //    The function indicates that when playing a video (state=1),
-      //    the player should play for six seconds and then stop.
-      var done = false;
-      function onPlayerStateChange(event) {
-        if (event.data == YT.PlayerState.PLAYING && !done) {
-          setTimeout(stopVideo, 6000);
-          done = true;
-        }
-      }
-      function stopVideo() {
-        player.stopVideo();
-      }
+var firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
 export default {
   name: "App",
@@ -325,15 +304,20 @@ export default {
       musicPlayer: false,
       musicPlayerRandom: false,
       musicPlayerRepeat: false,
-      musicPlaying: "YZhve0-Ep2Q",
+      musicPlaying: "hpjV962DLWs",
       infoMusicPlaying:"",
       playlistMenu: false,
 
       // Drogni begin ~
       drogoniTestPlayer: undefined, // Player used
       drogoniTestLaunched: false,   // Environment is initialized
-      drogoniTestPaused: false      // Test is paused
+      drogoniTestPaused: false,      // Test is paused
       // ~ Drogoni end
+
+      audioPlayer: undefined,
+      audioPlayerInit: false,
+      audioPlayerReady: false,
+      audioPlaying: false
     };
   },
   mounted() {
@@ -676,9 +660,99 @@ export default {
         DROGONI_BUTTON.textContent = "Pause Drogoni's test";
       }
       self.drogoniTestPaused = !self.drogoniTestPaused;
+    },
+    // ~ Drogoni end
+
+    onAudioReady: function(event)
+    {
+      console.log("Audio Player ready");
+      this.audioPlayerReady = true;
+      this.audioPlayer.playVideo();
+
+      var self = this;
+      setInterval(function() {
+        if (self.audioPlayer.getPlayerState() == YT.PlayerState.PLAYING)
+        {
+          let currentTime = self.audioPlayer.getCurrentTime();
+          let durationTime = self.audioPlayer.getDuration();
+
+          let percent = ((currentTime / durationTime) * 100).toFixed(0) + "%";
+          document.getElementById("progressBar").style.width = percent;
+
+          let min = Math.floor(currentTime / 60);
+          let sec = (currentTime % 60).toFixed(0);
+          if (min < 10) min = "0" + min;
+          if (sec < 10) sec = "0" + sec;
+          document.getElementById("currentTime").textContent = min + ":" + sec;
+        }
+      }, 500);
+    },
+
+    onAudioStateChange: function(event)
+    {
+      this.audioPlaying = (event.data == YT.PlayerState.PLAYING);
+      
+      if (event.data == YT.PlayerState.BUFFERING)
+      {
+        let duration = this.audioPlayer.getDuration();
+        let min = Math.floor(duration / 60)
+        let sec = (duration % 60).toFixed(0);
+        if (min < 10) min = "0" + min;
+        if (sec < 10) sec = "0" + sec;
+        document.getElementById("durationTime").textContent = min + ":" + sec;
+
+      }
+    },
+
+    onAudioError: function(event)
+    {
+      // TODO
+    },
+
+    audioPlayerSetup: function()
+    {
+      if (this.audioPlayerInit)
+        return;
+      
+      console.log("Setup audio player...");
+      var playerFrame = document.createElement("div");
+      playerFrame.id = "audioBackground";
+      playerFrame.style.display = "none";
+      document.body.appendChild(playerFrame);
+
+      this.audioPlayer = new YT.Player(playerFrame.id, {
+        videoId: this.musicPlaying,
+        events: {
+          onReady: this.onAudioReady,
+          onStateChange: this.onAudioStateChange,
+          onError: this.onAudioError
+        }
+      });
+
+      this.audioPlayerInit = true;
+    },
+
+    audioPlayerControl: function(command)
+    {
+      this.audioPlayerSetup();
+      if (!this.audioPlayerReady)
+        return;
+      
+      console.debug("Audio Player command received:", command);
+
+      switch (command)
+      {
+        case PLAYER_COMMAND.PLAY:
+          this.audioPlayer.playVideo();
+          break;
+        case PLAYER_COMMAND.PAUSE:
+          this.audioPlayer.pauseVideo();
+          break;
+        default:
+          console.error("Command ID", command, "not implemented");
+      }
     }
   }
-  // ~ Drogoni end
 };
 
 // Drogoni begin ~
