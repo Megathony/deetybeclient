@@ -9,8 +9,8 @@
         <h1 class="title"> DeeTube</h1>
       </div>
       <form class="searchBar">
-        <input type="text" v-model.lazy="search" v-on:change="searchVideo()" placeholder="Rechercher">
-        <img class="submit" src="./assets/header/svg/search.svg">
+        <input type="text" v-model.lazy="search" placeholder="Rechercher">
+        <img class="submit" @click="searchVideo()" src="./assets/header/svg/search.svg">
       </form>
     </header>
     <section class="menu">
@@ -58,6 +58,7 @@
                     <p class="channel" @click="exploreChannel(video.snippet.channelId , video.snippet.channelTitle)">{{video.snippet.channelTitle}}</p>
                 </div>
               </div>
+              <img class="playButton" src="./assets/app/play-button.svg" @click="playAudio(video)">
               <img class="button" src="./assets/app/addPlaylist.png" @click="addPlaylist(video)">
             </div>
           </div>
@@ -90,7 +91,8 @@
                     <p class="channel" @click="exploreChannel(video.snippet.channelId , video.snippet.channelTitle)">{{video.snippet.channelTitle}}</p>
                     </div>
                   </div>
-                  <img class="button" src="./assets/app/addPlaylist.png" @click="addPlaylist(video)">
+              <img class="playButton" src="./assets/app/play-button.svg" @click="playAudio(video)">
+              <img class="button" src="./assets/app/addPlaylist.png" @click="addPlaylist(video)">
               </div>
             </div>
             <div v-if="searchNav == 'channels'" class="allChannels">
@@ -140,6 +142,7 @@
                       <p class="title" @click="playVideo(video.snippet.resourceId.videoId)">{{video.snippet.title}}</p>
                     </div>
                   </div>
+                  <img class="playButton" src="./assets/app/play-button.svg" @click="playAudio(video)">
                   <img class="button" src="./assets/app/addPlaylist.png" @click="addPlaylist(video)">
                 </div>
               </div>
@@ -178,6 +181,7 @@
                     <p class="channel">{{video.snippet.channelTitle}}</p>
                   </div>
                 </div>
+                <img class="playButton" src="./assets/app/play-button.svg" @click="playAudio(video)">
                 <img class="button" src="./assets/app/addPlaylist.png" @click="addPlaylist(video)">
               </div>
             </div>
@@ -186,6 +190,13 @@
         <div class="PlaylistContent" v-if="content == 'credit'">
           <img class="returnButton" @click="returnBackward()" src="./assets/app/returnArrow.png">
           <h1>Crédits</h1>
+        </div>
+        <div class="PlaylistContent" v-if="content == 'Error'">
+          <a href="localhost:8080">
+            <img class="returnButton" src="./assets/app/returnArrow.png">
+          </a>
+          <h1>Erreur détecté!</h1>
+          <p>{{error}}</p>
         </div>
       </div>
     </section>
@@ -259,46 +270,6 @@
 <script>
 import axios from "axios";
 
-var tag = document.createElement('script');
-
-      tag.src = "https://www.youtube.com/iframe_api";
-      var firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-      // 3. This function creates an <iframe> (and YouTube player)
-      //    after the API code downloads.
-      var player;
-      function onYouTubeIframeAPIReady() {
-        player = new YT.Player('player', {
-          height: '360',
-          width: '640',
-          videoId: 'M7lc1UVf-VE',
-          events: {
-            'onReady': onPlayerReady,
-            'onStateChange': onPlayerStateChange
-          }
-        });
-      }
-
-      // 4. The API will call this function when the video player is ready.
-      function onPlayerReady(event) {
-        event.target.playVideo();
-      }
-
-      // 5. The API calls this function when the player's state changes.
-      //    The function indicates that when playing a video (state=1),
-      //    the player should play for six seconds and then stop.
-      var done = false;
-      function onPlayerStateChange(event) {
-        if (event.data == YT.PlayerState.PLAYING && !done) {
-          setTimeout(stopVideo, 6000);
-          done = true;
-        }
-      }
-      function stopVideo() {
-        player.stopVideo();
-      }
-
 export default {
   name: "App",
   data() {
@@ -327,7 +298,9 @@ export default {
       musicPlayerRepeat: false,
       musicPlaying: "YZhve0-Ep2Q",
       infoMusicPlaying:"",
+      posMusicPlaylist: "",
       playlistMenu: false,
+      error: "",
 
       // Drogni begin ~
       drogoniTestPlayer: undefined, // Player used
@@ -347,6 +320,9 @@ export default {
         })
         .catch( function(error){
           console.log('Error : ', error);
+          self.lastAction.push(self.content);
+          self.content = "Error";
+          self.error = error;
         })
     }
   },
@@ -361,16 +337,6 @@ export default {
 
     goCredit: function(){
       this.content = "credit";
-    },
-
-    playAudio: function(info){
-      console.log("info playing now :", info);
-      if(info.snippet.resourceId != undefined){
-        this.musicPlaying = info.snippet.resourceId.videoId;
-      } else {
-        this.musicPlaying = info.id;
-      }
-      this.infoMusicPlaying = info;
     },
 
     hideVideo: function(){
@@ -400,14 +366,34 @@ export default {
     },
 
     addPlaylist: function(video) {
+      var check = false;/*
+      for(var i = 0; i < this.waitingList.length ; i++){
+        if(this.waitingList[i].id != id){
+          tabTemp.push(this.waitingList[i]);
+        }
+      }*/
+      for(var i = 0; i < this.waitingList.length ; i++){
+        if(this.waitingList[i].snippet.resourceId.videoId != id){
+          tabTemp.push(this.waitingList[i]);
+        }
+      }
       this.waitingList.push(video) ;
     },
 
     removeFromPlaylist: function(id) {
-      var tabTemp = [];
+      /*var tabTemp = [];
       for(var i = 0; i < this.waitingList.length ; i++){
         console.log(tabTemp);
         if(this.waitingList[i].id != id){
+          tabTemp.push(this.waitingList[i]);
+        }
+      }
+      this.waitingList = tabTemp;
+      console.log(this.waitingList);*/
+      var tabTemp = [];
+      for(var i = 0; i < this.waitingList.length ; i++){
+        console.log(tabTemp);
+        if(this.waitingList[i].snippet.resourceId.videoId != id){
           tabTemp.push(this.waitingList[i]);
         }
       }
@@ -446,6 +432,9 @@ export default {
           })
           .catch( function(error){
             console.log('Error : ', error);
+            self.lastAction.push(self.content);
+            self.content = "Error";
+            self.error = error;
           })
         self.content = "result";
         console.log(self.search);
@@ -468,6 +457,9 @@ export default {
           })
           .catch( function(error){
             console.log('Error : ', error);
+            self.lastAction.push(self.content);
+            self.content = "Error";
+            self.error = error;
           })
         self.content = "result";
         console.log(self.search);
@@ -491,6 +483,9 @@ export default {
             })
             .catch( function(error){
               console.log('Error : ', error);
+              self.lastAction.push(self.content);
+              self.content = "Error";
+              self.error = error;
             })
           self.content = "result";
           console.log(self.search);
@@ -506,6 +501,9 @@ export default {
             })
             .catch( function(error){
               console.log('Error : ', error);
+              self.lastAction.push(self.content);
+              self.content = "Error";
+              self.error = error;
             })
           self.content = "result";
           for(var i = 0; i <= searchTemp.length ; i++){
@@ -552,11 +550,17 @@ export default {
                 })
                 .catch( function(error){
                   console.log('Error : ', error);
+                  self.lastAction.push(self.content);
+                  self.content = "Error";
+                  self.error = error;
                 })
 
           })
           .catch( function(error){
             console.log('Error : ', error);
+            self.lastAction.push(self.content);
+            self.content = "Error";
+            self.error = error;
           })
       
           
@@ -569,6 +573,9 @@ export default {
           })
           .catch( function(error){
             console.log('Error : ', error);
+            self.lastAction.push(self.content);
+            self.content = "Error";
+            self.error = error;
           })
         console.log(self.channelsVideos);
         self.channelInformation = channelTitle;
@@ -577,21 +584,84 @@ export default {
     explorePlaylist: function(playlistId){
       console.log(playlistId);
       var self = this;
-      self.lastAction.push(this.content);
-      console.log("lastAction :", this.lastAction);
+      var playlist = [];
+      self.lastAction.push(self.content);
+      console.log("lastAction :", self.lastAction);
       self.content = "playlist";
       console.log(self.content);
       var url = "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=" + playlistId + "&key=AIzaSyC6YKZ7p684K-WnU7iLUgRlro9vtbGD-EY";
         axios
-          .get(url) //&pageToken=" + nextPage + "
+          .get(url)
           .then( function(res){
             console.log('Playlist Informations : ', res.data.items);
             self.playlistsVideos = res.data.items;
+            playlist = res;
+            if(typeof playlist.nextPageToken  !== 'undefined'){
+              var nextPageToken = playlist.nextPageToken;
+            } else {
+              var nextPageToken = null;
+            }
+            while(nextPageToken != null){
+              var url = "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&pageToken=" + nextPageToken + "&playlistId=" + playlistId + "&key=AIzaSyC6YKZ7p684K-WnU7iLUgRlro9vtbGD-EY";
+                axios
+                  .get(url)
+                  .then( function(result){
+                    console.log('Playlist Informations : ', nextPageToken, "| données :", result.data.items);
+                    self.playlistsVideos.push(result.data.items);
+                    nextPlaylist = result;
+                    if(typeof nextPlaylist.nextPageToken  !== 'undefined'){
+                      nextPageToken = nextPlaylist.nextPageToken;
+                    } else {
+                      nextPageToken = null;
+                    }
+                  })
+                  .catch( function(error){
+                    console.log('Error : ', error);
+                    self.lastAction.push(self.content);
+                    self.content = "Error";
+                    self.error = error;
+                  })
+            }
           })
           .catch( function(error){
             console.log('Error : ', error);
+            self.lastAction.push(self.content);
+            self.content = "Error";
+            self.error = error;
           })
         console.log("test",self.playlistsVideos, self.content);
+    },
+
+    playAudio: function(info){
+      this.posMusicPlaylist = "";
+      console.log("info playing now :", info);
+      if(info.snippet.resourceId != undefined){
+        this.musicPlaying = info.snippet.resourceId.videoId;
+      } else {
+        this.musicPlaying = info.id;
+      }
+      this.infoMusicPlaying = info;
+    },
+
+    playAudioFromPlaylist: function(pos){
+      this.posMusicPlaylist = pos;
+      var info = this.waitingList[this.posMusicPlaylist];
+      console.log("info playing now :", info);
+      if(info.snippet.resourceId != undefined){
+        this.musicPlaying = info.snippet.resourceId.videoId;
+      } else {
+        this.musicPlaying = info.id;
+      }
+      this.infoMusicPlaying = info;
+    },
+
+    changeMusicPlaylist: function(){
+      if(this.waitingList.length > 1){
+        if(this.randomMode == true){
+          var pos = Math.Round(Math.random() * this.waitingList.length);
+          playAudioFromPlaylist(pos);
+        }
+      }
     },
 
     repeatMode: function(){
@@ -663,14 +733,14 @@ export default {
       // Toggle video playing
       if (!self.drogoniTestPaused)
       {
-        this.musicPlayer = false;
+        self.musicPlayer = false;
         self.drogoniTestPlayer.pauseVideo();
         console.log("[Drogoni] Video paused");
         DROGONI_BUTTON.textContent = "Resume Drogoni's test";
       }
       else
       {
-        this.musicPlayer = true;
+        self.musicPlayer = true;
         self.drogoniTestPlayer.playVideo();
         console.log("[Drogoni] Video resumed");
         DROGONI_BUTTON.textContent = "Pause Drogoni's test";
@@ -709,13 +779,15 @@ function onDrogoniChange(event)
   if (event.data == YT.PlayerState.ENDED)
   {
     self.musicPlayer = false;
+    console.log("Player ? : " ,self.musicPlayer);
+    console.log("Random ? : " ,self.musicPlayerRandom);
     console.log("repeat ? : " ,self.musicPlayerRepeat);
     if(self.musicPlayerRepeat == true){
       event.target.playVideo();
     } else {
-    alert("Video stopped");
-    self.drogoniTestPaused = true;
-    document.getElementById("drogoniButton").textContent = "Replay video";
+      alert("Video stopped");
+      self.drogoniTestPaused = true;
+      document.getElementById("drogoniButton").textContent = "Replay video";
     }
   }
 }
@@ -947,9 +1019,23 @@ function onDrogoniError(event)
   bottom: 10px;
 }
 
-.video .button:hover{
+.video .Button:hover{
   width: 35px;
   right: 2.5px;
+  bottom: 7.5px;
+  transition-duration: 0.5s;
+}
+
+.video .playButton{
+  position: absolute;
+  width: 30px;
+  right: 45px;
+  bottom: 10px;
+}
+
+.video .playButton:hover{
+  width: 35px;
+  right: 42.5px;
   bottom: 7.5px;
   transition-duration: 0.5s;
 }
