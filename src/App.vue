@@ -304,7 +304,8 @@ export default {
       musicPlayer: false,
       musicPlayerRandom: false,
       musicPlayerRepeat: false,
-      musicPlaying: "hpjV962DLWs",
+      // Music set to "Waterflame - Glorious Morning"
+      musicPlaying: "7T_YtklLyyo",
       infoMusicPlaying:"",
       playlistMenu: false,
 
@@ -595,12 +596,9 @@ export default {
     },
 
     repeatMode: function(){
-      if(this.musicPlayerRepeat == false){
-        this.musicPlayerRepeat = true;
-      } else {
-        this.musicPlayerRepeat = false;
-      };
-      console.log("Repeat:",this.musicPlayerRepeat);
+      this.musicPlayerRepeat = !this.musicPlayerRepeat;
+      this.audioPlayer.setLoop(this.musicPlayerRepeat);
+      console.log("Loop mode set to",this.musicPlayerRepeat);
     },
 
     // Function Random ~
@@ -697,6 +695,7 @@ export default {
     {
       console.log("Audio Player ready");
       this.audioPlayerReady = true;
+      this.audioPlayer.loadPlaylist(this.musicPlaying);
       this.audioPlayer.playVideo();
 
       // Looped task 
@@ -780,7 +779,6 @@ export default {
 
       // Now setup player
       this.audioPlayer = new YT.Player(playerFrame.id, {
-        videoId: this.musicPlaying,
         events: {
           onReady: this.onAudioReady,
           onStateChange: this.onAudioStateChange,
