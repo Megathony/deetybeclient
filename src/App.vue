@@ -209,10 +209,10 @@
           <div class="buttonPlayer">
             <img v-if="musicPlayerRandom == true" @click="randomMode()" src="./assets/app/random-activate.svg">
             <img v-else @click="randomMode()" src="./assets/app/random.svg">
-            <img src="./assets/app/previous.svg">
+            <img @click="audioPlayerControl(3)" src="./assets/app/previous.svg">
             <img @click="audioPlayerControl(1)" v-if="audioPlaying" src="./assets/app/audio-pause.svg">
             <img @click="audioPlayerControl(0)" v-else src="./assets/app/audio-play.svg">
-            <img src="./assets/app/next.svg">
+            <img @click="audioPlayerControl(2)" src="./assets/app/next.svg">
             <img v-if="musicPlayerRepeat == true" @click="repeatMode()" src="./assets/app/repeat-activate.svg">
             <img v-else @click="repeatMode()" src="./assets/app/repeat.svg">
           </div>
@@ -334,7 +334,10 @@ export default {
       /**
        * Flag to notify if a video is currently played.
        */
-      audioPlaying: false
+      audioPlaying: false,
+
+      audioListId: [],
+      audioListModified: false
     };
   },
   mounted() {
@@ -401,7 +404,15 @@ export default {
     },
 
     addPlaylist: function(video) {
-      this.waitingList.push(video) ;
+      this.waitingList.push(video);
+      
+      // Adding video to playlist
+      let videoId = video.id;
+      if ((typeof videoId) != "string")
+        videoId = videoId.videoId;
+      console.log("Video ID:", videoId);
+      this.audioListId.push(videoId);
+      this.audioListModified = true;
     },
 
     removeFromPlaylist: function(id) {
@@ -681,6 +692,24 @@ export default {
     // AUDIO BACKGROUND FUNCTIONS
     // -------------------------------------------
     
+    reloadAudioPlaylist: function()
+    {
+      if (this.audioListModified)
+        {
+          let playlist = this.audioListId.join();
+          console.log(this.audioListId[0]);
+          console.log("Playlist set to:", playlist);
+          let index = this.audioPlayer.getPlaylistIndex()+1;
+          if (index >= this.audioListId.length)
+            index = this.audioListId.length - 1;
+          
+          this.audioPlayer.loadPlaylist(playlist);
+          this.audioPlayer.setLoop(this.musicPlayerRepeat);
+          this.audioPlayer.playVideoAt(index);
+          this.audioListModified = false;
+        }
+    },
+
     /**
      * On background player ready.
      * 
@@ -695,8 +724,8 @@ export default {
     {
       console.log("Audio Player ready");
       this.audioPlayerReady = true;
-      this.audioPlayer.loadPlaylist(this.musicPlaying);
-      this.audioPlayer.playVideo();
+      this.audioPlayer.setPlaybackQuality("small");
+      this.reloadAudioPlaylist();
 
       // Looped task 
       var self = this;
@@ -732,6 +761,11 @@ export default {
     {
       this.audioPlaying = (event.data == YT.PlayerState.PLAYING);
       
+      if (event.data <= YT.PlayerState.ENDED)
+      {
+        this.reloadAudioPlaylist();
+      }
+
       if (event.data == YT.PlayerState.BUFFERING)
       {
         let duration = this.audioPlayer.getDuration();
@@ -768,12 +802,19 @@ export default {
     {
       if (this.audioPlayerInit)
         return;
+
+      const DIV_ID = "audioBackground";
+      if (document.getElementById(DIV_ID) != null)
+      {
+        console.warn("Audio player environment already created, destroyed it...");
+        document.body.removeChild(document.getElementById(DIV_ID));
+      }
       
       console.log("Setup audio player...");
       
       // Create the place of audio player
       var playerFrame = document.createElement("div");
-      playerFrame.id = "audioBackground";
+      playerFrame.id = DIV_ID;
       playerFrame.style.display = "none";
       document.body.appendChild(playerFrame);
 
@@ -810,12 +851,24 @@ export default {
       switch (command)
       {
         case PLAYER_COMMAND.PLAY:
+          // Force to reload playlist if loaded playlist is empty
+          if (this.audioPlayer.getPlaylist().length == 0)
+          {
+            this.audioListModified = true;
+            this.reloadAudioPlaylist();
+          }
           this.audioPlayer.playVideo();
           break;
         case PLAYER_COMMAND.PAUSE:
           this.audioPlayer.pauseVideo();
           break;
-        // TODO Add missing commands
+        case PLAYER_COMMAND.NEXT:
+          this.reloadAudioPlaylist();
+          this.audioPlayer.nextVideo();
+          break;
+        case PLAYER_COMMAND.PREVIOUS:
+          this.reloadAudioPlaylist();
+          this.audioPlayer.previousVideo();
         default:
           console.error("Command ID", command, "not implemented");
       }
