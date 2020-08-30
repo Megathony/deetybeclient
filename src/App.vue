@@ -265,9 +265,21 @@ import axios from "axios";
  * Available player commands
  */
 const PLAYER_COMMAND = {
+  /**
+   * Play selected video.
+   */
   PLAY: 0,
+  /**
+   * Pause selected video.
+   */
   PAUSE: 1,
+  /**
+   * Play next video from selected one.
+   */
   NEXT: 2,
+  /**
+   * Play previous video from selected one.
+   */
   PREVIOUS: 3
 }
 
@@ -336,7 +348,14 @@ export default {
        */
       audioPlaying: false,
 
+      /**
+       * List of all video ID to read by background player.
+       */
       audioListId: [],
+
+      /**
+       * Flag to notify if user playlist is modified.
+       */
       audioListModified: false
     };
   },
@@ -404,6 +423,7 @@ export default {
     },
 
     addPlaylist: function(video) {
+      // WARNING: `video` is never the same kind of object
       this.waitingList.push(video);
       
       // Adding video to playlist
@@ -691,7 +711,14 @@ export default {
     // -------------------------------------------
     // AUDIO BACKGROUND FUNCTIONS
     // -------------------------------------------
-    
+    /**
+     * Reload player's playlist.
+     * 
+     * If `audioListModified` flag is enabled, it will load force player to load the new list
+     * and the video to the next to read.
+     * 
+     * This function should called when selected video is ended.
+     */
     reloadAudioPlaylist: function()
     {
       if (this.audioListModified)
