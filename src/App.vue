@@ -430,7 +430,6 @@ export default {
       let videoId = video.id;
       if ((typeof videoId) != "string")
         videoId = videoId.videoId;
-      console.log("Video ID:", videoId);
       this.audioListId.push(videoId);
       this.audioListModified = true;
     },
@@ -628,8 +627,9 @@ export default {
 
     repeatMode: function(){
       this.musicPlayerRepeat = !this.musicPlayerRepeat;
-      this.audioPlayer.setLoop(this.musicPlayerRepeat);
-      console.log("Loop mode set to",this.musicPlayerRepeat);
+      if (this.audioPlayer != undefined)
+        this.audioPlayer.setLoop(this.musicPlayerRepeat);
+      console.debug("Loop mode set to",this.musicPlayerRepeat);
     },
 
     // Function Random ~
@@ -638,12 +638,10 @@ export default {
       */
 
     randomMode: function(){
-      if(this.musicPlayerRandom == false){
-        this.musicPlayerRandom = true;
-      } else {
-        this.musicPlayerRandom = false;
-      };
-      console.log("Random :",this.musicPlayerRandom);
+      this.musicPlayerRandom = !this.musicPlayerRandom;
+      if (this.audioPlayer != undefined)
+        this.audioPlayer.setShuffle(this.musicPlayerRandom);
+      console.debug("Shuffle mode set to", this.musicPlayerRandom);
     },
 
     // Drogoni begin ~
@@ -724,14 +722,14 @@ export default {
       if (this.audioListModified)
         {
           let playlist = this.audioListId.join();
-          console.log(this.audioListId[0]);
-          console.log("Playlist set to:", playlist);
-          let index = this.audioPlayer.getPlaylistIndex()+1;
+          let index = this.audioPlayer.getPlaylistIndex() + 1;
+
           if (index >= this.audioListId.length)
             index = this.audioListId.length - 1;
           
           this.audioPlayer.loadPlaylist(playlist);
           this.audioPlayer.setLoop(this.musicPlayerRepeat);
+          this.audioPlayer.setShuffle(this.musicPlayerRandom);
           this.audioPlayer.playVideoAt(index);
           this.audioListModified = false;
         }
