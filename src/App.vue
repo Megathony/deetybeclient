@@ -444,6 +444,27 @@ export default {
       }
       this.waitingList = tabTemp;
       console.log(this.waitingList);
+      
+      // Removing video from audio playlist...
+      var idIndex = -1;
+      for (let index = 0; index < this.audioListId.length; index++)
+      {
+        if (this.audioListId[index] == id.videoId)
+        {
+          idIndex = index;
+          break;
+        }
+      }
+      if (idIndex != -1)
+      {
+        this.audioListId.splice(idIndex, 1);
+        this.audioListModified = true;
+        console.debug("New audio playlist:", this.audioListId);
+      }
+      else
+      {
+        console.warn("Video ID", id.videoId, "not found in audio playlist");
+      }
     },
 
     showPlaylist: function(){
